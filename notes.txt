@@ -1,0 +1,130 @@
+PROJECT TITLE: Using machine learning to predict nutritional deficiencies based on 
+               an individual’s health history, dietary intake, and biomarkers.
+STUDENT: [Victor Mwendia Macharia] 
+SUPERVISOR: Dr. Monica
+DATE: January 2026
+
+--------------------------------------------------------------------------------
+1. PROJECT INITIALIZATION & TECH STACK
+--------------------------------------------------------------------------------
+- Objective: Create a Clinical Decision Support System (CDSS) that uses AI to 
+  identify nutrient deficiencies before clinical symptoms appear.
+- Backend: FastAPI (Python) - chosen for high performance and ML compatibility.
+- Frontend: React - chosen for a modern, responsive user interface.
+- Architecture: Monorepo structure with /backend and /frontend folders.
+
+--------------------------------------------------------------------------------
+2. DATA SOURCING (NHANES)
+--------------------------------------------------------------------------------
+- Rejected synthetic/Kaggle datasets in favor of NHANES (National Health and 
+  Nutrition Examination Survey) for clinical validity.
+- Cycles Used: 2017-2018.
+- Specific Files Downloaded:
+    * DEMO_J.XPT (Demographics: Age, Gender)
+    * DR1TOT_J.XPT (Dietary Intake: 24-hr Iron and Vitamin D intake)
+    * FERTIN_J.XPT (Biomarker: Serum Ferritin for Iron)
+    * VID_J.XPT (Biomarker: 25-hydroxyvitamin D for Vitamin D)
+
+--------------------------------------------------------------------------------
+3. DATA ENGINEERING & PREPROCESSING
+--------------------------------------------------------------------------------
+- Merging: Created 'merge_data.py' to join all .XPT files on the unique 
+  participant ID (SEQN).
+- Cleaning: Handled missing values (NaN) and filtered specific features to 
+  reduce noise.
+- Feature Selection:
+    * Inputs: RIDAGEYR (Age), RIAGENDR (Gender), DR1TIRON (Iron), DR1TVD (Vit D).
+    * Targets: LBDFERSI (Ferritin levels), LBXVIDMS (Vitamin D levels).
+
+--------------------------------------------------------------------------------
+4. CLINICAL LABELING (STEP 3)
+--------------------------------------------------------------------------------
+- Applied clinical diagnostic thresholds to create a supervised learning target:
+    * Iron Deficiency: Ferritin < 15 ng/mL.
+    * Vit D Deficiency: 25(OH)D < 50 nmol/L (approx. 20 ng/mL).
+- Generated 'labeled_nutrition.csv' with a binary 'any_deficiency' column (0 or 1).
+
+--------------------------------------------------------------------------------
+5. MACHINE LEARNING MODELING (STEP 4)
+--------------------------------------------------------------------------------
+- Algorithm: Random Forest Classifier.
+- Justification: Handles non-linear relationships and provides feature 
+  importance, which is critical for clinical explainability.
+- Performance:
+    * Overall Accuracy: 65%
+    * The model is successfully saved as 'nutrition_model.pkl' for deployment.
+
+--------------------------------------------------------------------------------
+6. API DEVELOPMENT (STEP 5)
+--------------------------------------------------------------------------------
+- Created a FastAPI application to serve the model.
+- Endpoint: POST /predict
+- Functionality: Receives user profile data from frontend, runs it through the 
+  saved model, and returns a risk category (High/Low) and confidence score.
+--------------------------------------------------------------------------------
+
+
+DATA DICTIONARY: Labeled Nutrition Dataset (NHANES 2017-2018) [ National Health and Nutrition Examination Survey.]
+--------------------------------------------------------------------------------
+
+1. SEQN (Sequence Number)
+   - Type: Unique Identifier
+   - Description: The unique ID assigned to each participant in the NHANES survey. 
+     Used as the primary key to link health history, diet, and lab results.
+
+2. RIDAGEYR (Age in Years)
+   - Category: Health History
+   - Description: The age of the participant at the time of the screening. 
+     Used by the model to account for age-related nutritional needs.
+
+3. RIAGENDR (Gender)
+   - Category: Health History
+   - Description: The biological sex of the participant.
+   - Values: 1 = Male, 2 = Female. 
+     (Note: Crucial for iron deficiency prediction due to menstruation-related 
+     blood loss in females).
+
+4. DR1TIRON (Dietary Iron)
+   - Category: Dietary Intake
+   - Unit: Milligrams (mg)
+   - Description: The total amount of iron consumed by the individual in a 
+     24-hour period as reported in the dietary interview.
+
+5. DR1TVD (Dietary Vitamin D)
+   - Category: Dietary Intake
+   - Unit: Micrograms (mcg)
+   - Description: The total amount of Vitamin D (D2 + D3) consumed by the 
+     individual in a 24-hour period.
+
+6. LBDFERSI (Serum Ferritin)
+   - Category: Biomarker (Target Feature)
+   - Unit: Nanograms per Milliliter (ng/mL)
+   - Description: A blood marker that indicates the amount of stored iron in 
+     the body. This is the clinical "ground truth" for iron status.
+
+7. LBXVIDMS (Vitamin D Metabolite)
+   - Category: Biomarker (Target Feature)
+   - Unit: Nanomoles per Liter (nmol/L)
+   - Description: The concentration of 25-hydroxyvitamin D in the serum. 
+     Used to determine the clinical Vitamin D status.
+
+8. iron_deficient (Binary Label)
+   - Type: Target Variable
+   - Logic: 1 if LBDFERSI < 15 ng/mL; 0 otherwise.
+   - Clinical Basis: Threshold used to identify absolute iron deficiency.
+
+9. vit_d_deficient (Binary Label)
+   - Type: Target Variable
+   - Logic: 1 if LBXVIDMS < 50 nmol/L; 0 otherwise.
+   - Clinical Basis: Threshold used to identify Vitamin D insufficiency/deficiency.
+
+10. any_deficiency (Composite Label)
+    - Type: Target Variable (Model Output)
+    - Logic: 1 if either 'iron_deficient' or 'vit_d_deficient' is 1; 0 otherwise.
+    - Description: The primary column used to train the machine learning 
+      classifier to identify overall nutritional risk.
+--------------------------------------------------------------------------------
+
+React code for a "Result Dashboard" that turns 
+that raw JSON feedback into a professional-looking 
+clinical report?
