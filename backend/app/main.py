@@ -29,6 +29,14 @@ class PredictionRequest(BaseModel):
     # Intake: Cannot be negative
     iron_intake: float = Field(..., ge=0, description="Iron intake cannot be negative")
     vit_d_intake: float = Field(..., ge=0, description="Vitamin D intake cannot be negative")
+@app.get("/")
+def home():
+    return {
+        "status": "Online",
+        "system": "Nutritional Deficiency Prediction API",
+        "version": "1.0.0",
+        "documentation": "/docs"
+    }
 
 @app.post("/predict")
 def predict(data: PredictionRequest):
